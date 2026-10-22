@@ -25,6 +25,10 @@ final readonly class Tally {
 
 	/**
 	 * What summary() says when there is nothing.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
 	public const string NOTHING = 'nothing held';
 
@@ -33,7 +37,8 @@ final readonly class Tally {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array<string, array> $found Kind => rows.
+	 * @param array<string, mixed> $found Kind => rows. Anything that cannot
+	 *                                    be counted counts as none.
 	 *
 	 * @return array<string, int>
 	 */

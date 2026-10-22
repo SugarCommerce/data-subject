@@ -24,12 +24,27 @@ namespace SugarCommerce\DataSubject;
  */
 enum Consent: string {
 
-	case Yes      = 'yes';
-	case No       = 'no';
+	/**
+	 * They agreed.
+	 */
+	case Yes = 'yes';
+
+	/**
+	 * They were asked, and did not agree.
+	 */
+	case No = 'no';
+
+	/**
+	 * Nobody asked them.
+	 */
 	case NotAsked = 'not asked';
 
 	/**
 	 * The answer a stored value records.
+	 *
+	 * Yes is exactly 1, '1' or true. Consent has to be unambiguous, so a
+	 * value that only casts to 1 — '1abc', '01', 1.5, a non-empty array —
+	 * is not read as agreement; it is no.
 	 *
 	 * @since 1.0.0
 	 *
@@ -40,9 +55,9 @@ enum Consent: string {
 	 */
 	public static function of( mixed $stored ): self {
 		return match ( true ) {
-			null === $stored || '' === $stored => self::NotAsked,
-			1 === (int) $stored                => self::Yes,
-			default                            => self::No,
+			null === $stored || '' === $stored                   => self::NotAsked,
+			1 === $stored || '1' === $stored || true === $stored => self::Yes,
+			default                                              => self::No,
 		};
 	}
 

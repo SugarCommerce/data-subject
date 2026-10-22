@@ -13,7 +13,7 @@ Where your data lives is your schema, and no library can know it. What can be sh
 
 ## Features
 
-- ✂️ **`Redact`** — drop named columns from every row of a section.
+- ✂️ **`Redact`** — drop named columns from every row of a section, whatever their case, or keep only the ones you name.
 - 🔍 **`Mentions`** — find addresses in stored text, case-folded and as JSON escaped them.
 - 🕶️ **`Pseudonym`** — the start of a keyed digest, for an audit row that identifies a request without naming anyone.
 - 🧾 **`Tally`** — "2 orders, 1 licenses — ticket 4411", leaving out the noughts.
@@ -50,6 +50,12 @@ $actions->record( 'buyer.erase', Pseudonym::subject( $keyed_hash ), Tally::note(
 
 `Pseudonym::subject()` wants a digest from a **keyed** hash. An unkeyed SHA-256 of an address is reversed by hashing a list of addresses.
 
+A deny-list fails open: a credential column added next year is exported until somebody adds it to the list. Where you can name a section's columns, `Redact::only( 'id', 'amount', … )` keeps those and nothing else. Either way only top-level columns are touched — a JSON column is one value; open it and redact inside it yourself.
+
+`Mentions::any()` looks for an address as typed and in each form `json_encode()` writes it: slashes escaped or not, accents as `\u00e9` or not. It does not normalise Unicode; if addresses can carry accents, normalise both sides with intl's `Normalizer` first.
+
+`Consent::of()` reads yes only from exactly `1`, `'1'` or `true`. A value that merely casts to 1 — `'1abc'`, `'01'`, `1.5` — is no: consent has to be unambiguous.
+
 `Mentions::key()` is a matching key, never an address to send to: RFC 5321 lets a server treat the local part as case-sensitive.
 
 ## What it does not do
@@ -63,7 +69,7 @@ composer install
 composer test
 ```
 
-17 tests: dropped and kept columns, case-folded and JSON-escaped matches, empty values that would match everything, summaries and notes, pseudonyms that refuse to be an address, and the three consent answers.
+25 tests: dropped and kept columns, case-folded and JSON-escaped matches, empty values that would match everything, summaries and notes, pseudonyms that refuse to be an address, and the three consent answers.
 
 ## License
 

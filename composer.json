@@ -1,6 +1,6 @@
 {
   "name": "sugarcommerce/data-subject",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "The small, easily-botched pieces of answering a GDPR access or erasure request: the export without the columns a person must not be handed, finding an address in stored payloads however JSON escaped it, an audit trail that does not undo the erasure it records, and plain summaries of what was done. Zero dependencies.",
   "type": "library",
   "license": "GPL-2.0-or-later",

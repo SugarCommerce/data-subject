@@ -92,6 +92,38 @@ final class DataSubjectTest extends TestCase {
 		$this->assertSame( '', Pseudonym::subject( '' ) );
 	}
 
+	/**
+	 * SQLite column names are case-insensitive, so `Access_Token` is the
+	 * same column and must go with `access_token`.
+	 */
+	public function test_redaction_ignores_case(): void {
+		$rows = array( array( 'id' => 1, 'Access_Token' => 'secret' ) );
+
+		$this->assertSame( array( array( 'id' => 1 ) ), Redact::rows( $rows, 'access_token' ) );
+	}
+
+	/**
+	 * The allow-list form: a column added later stays out.
+	 */
+	public function test_only_keeps_the_named_columns(): void {
+		$keep = Redact::only( 'ID', 'amount' );
+
+		$this->assertSame( array( 'id' => 1, 'amount' => 900 ), $keep( array( 'id' => 1, 'amount' => 900, 'new_secret' => 'x' ) ) );
+	}
+
+	/**
+	 * Written with JSON_UNESCAPED_UNICODE, the slash is escaped and the
+	 * accent is not; written by default, both are. Either way it is the
+	 * address.
+	 */
+	public function test_every_json_form_of_an_address_is_found(): void {
+		$address = 'josé/ops@example.com';
+
+		$this->assertTrue( Mentions::any( (string) json_encode( array( 'to' => $address ) ), array( $address ) ) );
+		$this->assertTrue( Mentions::any( (string) json_encode( array( 'to' => $address ), JSON_UNESCAPED_UNICODE ), array( $address ) ) );
+		$this->assertTrue( Mentions::any( (string) json_encode( array( 'to' => $address ), JSON_UNESCAPED_SLASHES ), array( $address ) ) );
+	}
+
 	/* ─── Consent ──────────────────────────────────────────────────────── */
 
 	/**
@@ -105,6 +137,12 @@ final class DataSubjectTest extends TestCase {
 			'no text'    => array( '0', Consent::No, 'no' ),
 			'not asked'  => array( null, Consent::NotAsked, '' ),
 			'empty'      => array( '', Consent::NotAsked, '' ),
+			'true'       => array( true, Consent::Yes, 'yes' ),
+			// Only casts to 1: not unambiguous agreement.
+			'1abc'       => array( '1abc', Consent::No, 'no' ),
+			'01'         => array( '01', Consent::No, 'no' ),
+			'1.5'        => array( 1.5, Consent::No, 'no' ),
+			'an array'   => array( array( 'x' ), Consent::No, 'no' ),
 		);
 	}
 

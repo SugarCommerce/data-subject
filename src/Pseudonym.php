@@ -34,6 +34,10 @@ final readonly class Pseudonym {
 
 	/**
 	 * Characters kept.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var int
 	 */
 	public const int LENGTH = 16;
 
