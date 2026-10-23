@@ -14,7 +14,7 @@ Where your data lives is your schema, and no library can know it. What can be sh
 ## Features
 
 - ✂️ **`Redact`** — drop named columns from every row of a section, whatever their case, or keep only the ones you name.
-- 🔍 **`Mentions`** — find addresses in stored text, case-folded and as JSON escaped them.
+- 🔍 **`Mentions`** — find addresses in stored text, case-folded and as JSON escaped them, or strip every address out of text before it is stored.
 - 🕶️ **`Pseudonym`** — the start of a keyed digest, for an audit row that identifies a request without naming anyone.
 - 🧾 **`Tally`** — "2 orders, 1 licenses — ticket 4411", leaving out the noughts.
 - ☑️ **`Consent`** — yes, no and not asked, kept three.
@@ -54,6 +54,15 @@ A deny-list fails open: a credential column added next year is exported until so
 
 `Mentions::any()` looks for an address as typed and in each form `json_encode()` writes it: slashes escaped or not, accents as `\u00e9` or not. It does not normalise Unicode; if addresses can carry accents, normalise both sides with intl's `Normalizer` first.
 
+`Mentions::strip()` is for text you keep but did not write — a mail provider's bounce, an upstream error message — which may name the person it was about:
+
+```php
+$order['delivery_error'] = Mentions::strip( $bounce );            // "550 <[address]>: mailbox full"
+$note                    = Mentions::strip( $text, '[redacted]' ); // the replacement is taken literally
+```
+
+Anything with an `@` between two runs of characters that are not spaces, brackets, quotes or `,;:` counts. That is looser than an address validator on purpose: a false positive costs a word of an error message, a miss keeps an address nobody can find to erase. An address inside a JSON string — slash escaped or not — is replaced whole, and text that is not valid UTF-8 is still stripped.
+
 `Consent::of()` reads yes only from exactly `1`, `'1'` or `true`. A value that merely casts to 1 — `'1abc'`, `'01'`, `1.5` — is no: consent has to be unambiguous.
 
 `Mentions::key()` is a matching key, never an address to send to: RFC 5321 lets a server treat the local part as case-sensitive.
@@ -69,7 +78,7 @@ composer install
 composer test
 ```
 
-25 tests: dropped and kept columns, case-folded and JSON-escaped matches, empty values that would match everything, summaries and notes, pseudonyms that refuse to be an address, and the three consent answers.
+29 tests: dropped and kept columns, case-folded and JSON-escaped matches, addresses stripped from free text and JSON, empty values that would match everything, summaries and notes, pseudonyms that refuse to be an address, and the three consent answers.
 
 ## License
 

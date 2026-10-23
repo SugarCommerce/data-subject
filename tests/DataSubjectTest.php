@@ -61,6 +61,30 @@ final class DataSubjectTest extends TestCase {
 		$this->assertSame( 'ada@example.com', Mentions::key( "  ADA@example.com\n" ) );
 	}
 
+	public function test_strip_replaces_every_address_in_free_text(): void {
+		$this->assertSame(
+			'550 <[address]>: mailbox full; cc [address], "[address]"',
+			Mentions::strip( '550 <Ada@Example.com>: mailbox full; cc bo@example.org, "c.d+tag@example.net"' )
+		);
+		$this->assertSame( 'Delivery failed', Mentions::strip( 'Delivery failed' ) );
+	}
+
+	public function test_strip_replaces_an_address_as_json_wrote_it(): void {
+		$payload = (string) json_encode( array( 'to' => 'a/b@exämple.com' ) );
+
+		$this->assertSame( '{"to":"[address]"}', Mentions::strip( $payload ) );
+		$this->assertFalse( Mentions::any( Mentions::strip( $payload ), array( 'a/b@exämple.com' ) ) );
+	}
+
+	public function test_strip_takes_the_replacement_literally(): void {
+		$this->assertSame( 'to $0 \1', Mentions::strip( 'to ada@example.com \1', '$0' ) );
+		$this->assertSame( 'to ', Mentions::strip( 'to ada@example.com', '' ) );
+	}
+
+	public function test_strip_still_strips_text_that_is_not_utf8(): void {
+		$this->assertSame( "\xff [address]", Mentions::strip( "\xff ada@example.com" ) );
+	}
+
 	/* ─── Tally ────────────────────────────────────────────────────────── */
 
 	public function test_a_summary_leaves_out_the_noughts(): void {
